@@ -1,5 +1,5 @@
 import unittest
-from crawl import get_images_from_html, get_urls_from_html, normalize_url, get_heading_from_html, get_first_paragraph_from_html
+from crawl import extract_page_data, get_images_from_html, get_urls_from_html, normalize_url, get_heading_from_html, get_first_paragraph_from_html
 
 class TestCrawl(unittest.TestCase):
     def test_normalize_url(self):
@@ -160,6 +160,102 @@ class TestCrawl(unittest.TestCase):
                 print(f"Testing {test_case["title"]}")
                 expected = test_case["expected"]
                 actual = get_images_from_html(test_case["html"], test_case["base_url"])
+                self.assertEqual(actual, expected)
+
+    def test_extract_page_data(self):
+        test_cases = [
+            {
+                "title": "Test Extract Default",
+                "html": """<html><body>
+                    <h1>Test Title</h1>
+                    <p>This is the first paragraph.</p>
+                    <a href="/link1">Link 1</a>
+                    <img src="/image1.jpg" alt="Image 1">
+                </body></html>""",
+                "base_url": "https://crawler-test.com",
+                "expected": {
+                    "url": "https://crawler-test.com",
+                    "heading": "Test Title",
+                    "first_paragraph": "This is the first paragraph.",
+                    "outgoing_links": ["https://crawler-test.com/link1"],
+                    "image_urls": ["https://crawler-test.com/image1.jpg"],
+                }
+            },
+            {
+                "title": "Test Extract with H2",
+                "html": """<html><body>
+                    <h2>Test Title</h2>
+                    <p>This is the first paragraph.</p>
+                    <a href="/link1">Link 1</a>
+                    <img src="/image1.jpg" alt="Image 1">
+                </body></html>""",
+                "base_url": "https://crawler-test.com",
+                "expected": {
+                    "url": "https://crawler-test.com",
+                    "heading": "Test Title",
+                    "first_paragraph": "This is the first paragraph.",
+                    "outgoing_links": ["https://crawler-test.com/link1"],
+                    "image_urls": ["https://crawler-test.com/image1.jpg"],
+                }
+            },
+            {
+                "title": "Test Extract with multiple links",
+                "html": """<html><body>
+                    <h2>Test Title</h2>
+                    <p>This is the first paragraph.</p>
+                    <a href="/link1">Link 1</a>
+                    <a href="/link2">Link 2</a>
+                    <img src="/image1.jpg" alt="Image 1">
+                </body></html>""",
+                "base_url": "https://crawler-test.com",
+                "expected": {
+                    "url": "https://crawler-test.com",
+                    "heading": "Test Title",
+                    "first_paragraph": "This is the first paragraph.",
+                    "outgoing_links": ["https://crawler-test.com/link1", "https://crawler-test.com/link2"],
+                    "image_urls": ["https://crawler-test.com/image1.jpg"],
+                }
+            },
+            {
+                "title": "Test Extract with multiple images",
+                "html": """<html><body>
+                    <h2>Test Title</h2>
+                    <p>This is the first paragraph.</p>
+                    <a href="/link1">Link 1</a>
+                    <img src="/image1.jpg" alt="Image 1">
+                    <img src="/image2.jpg" alt="Image 2">
+                </body></html>""",
+                "base_url": "https://crawler-test.com",
+                "expected": {
+                    "url": "https://crawler-test.com",
+                    "heading": "Test Title",
+                    "first_paragraph": "This is the first paragraph.",
+                    "outgoing_links": ["https://crawler-test.com/link1"],
+                    "image_urls": ["https://crawler-test.com/image1.jpg", "https://crawler-test.com/image2.jpg"],
+                }
+            },
+            {
+                "title": "Test Extract with no links or images",
+                "html": """<html><body>
+                    <h1>Test Title</h1>
+                    <p>This is the first paragraph.</p>
+                </body></html>""",
+                "base_url": "https://crawler-test.com",
+                "expected": {
+                    "url": "https://crawler-test.com",
+                    "heading": "Test Title",
+                    "first_paragraph": "This is the first paragraph.",
+                    "outgoing_links": [],
+                    "image_urls": [],
+                }
+            }
+        ]
+
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                print(f"Testing {test_case["title"]}")
+                expected = test_case["expected"]
+                actual = extract_page_data(test_case["html"], test_case["base_url"])
                 self.assertEqual(actual, expected)
 
 
