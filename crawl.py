@@ -1,6 +1,8 @@
+from operator import contains
 from urllib.parse import urljoin, urlsplit
 from bs4 import BeautifulSoup, Tag
 from typing import TypedDict
+import requests
 
 def normalize_url(url) -> str:
     parsed_url = urlsplit(url)
@@ -81,3 +83,49 @@ def extract_page_data(html: str, page_url: str) -> PageData:
         "outgoing_links": get_urls_from_html(html, page_url),
         "image_urls": get_images_from_html(html, page_url)
     }
+
+def get_html(url):
+    response = requests.get(url, headers={
+        "User-Agent": "BootCrawler/1.0"
+    })
+
+    if response.status_code >= 400:
+        raise Exception(f"Failed to get {url}, status code: {response.status_code}")
+
+    content_type = response.headers.get("content-type")
+
+    if "text/html" not in content_type:
+        raise Exception(f"Invalid content type getting {url}, content-type is: {content_type}")
+
+    return response.text
+
+def crawl_page(base_url, current_url=None, page_data=None):
+    if current_url is None:
+        current_url = base_url
+
+    parsed_base_url = urlsplit(base_url)
+    parsed_current_url = urlsplit(current_url)
+
+    if parsed_base_url.netloc != parsed_current_url.netloc:
+        return
+
+    if page_data is None:
+        page_data = {}
+
+    normalized_current_url = normalize_url(current_url)
+
+    if normalized_current_url in page_data:
+        return
+    else:
+        page_data[normalized_current_url] = None
+
+    print(f"Getting html for: {current_url}")
+    html = get_html(current_url)
+
+    current_page_data = extract_page_data(html, current_url)
+    page_data[normalized_current_url] = current_page_data
+
+    for url in current_page_data["outgoing_links"]:
+        crawl_page(base_url, url, page_data)
+
+    return page_data
