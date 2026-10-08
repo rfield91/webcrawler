@@ -103,24 +103,27 @@ def crawl_page(base_url, current_url=None, page_data=None):
     if current_url is None:
         current_url = base_url
 
+    if page_data is None:
+        page_data = {}
+
     parsed_base_url = urlsplit(base_url)
     parsed_current_url = urlsplit(current_url)
 
     if parsed_base_url.netloc != parsed_current_url.netloc:
-        return
-
-    if page_data is None:
-        page_data = {}
+        return page_data
 
     normalized_current_url = normalize_url(current_url)
 
     if normalized_current_url in page_data:
-        return
+        return page_data
     else:
         page_data[normalized_current_url] = None
 
     print(f"Getting html for: {current_url}")
-    html = get_html(current_url)
+    html = safe_get_html(current_url)
+
+    if html is None:
+        return page_data
 
     current_page_data = extract_page_data(html, current_url)
     page_data[normalized_current_url] = current_page_data
@@ -129,3 +132,10 @@ def crawl_page(base_url, current_url=None, page_data=None):
         crawl_page(base_url, url, page_data)
 
     return page_data
+
+def safe_get_html(url: str) -> str | None:
+    try:
+        return get_html(url)
+    except Exception as e:
+        print(f"{e}")
+        return None
