@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from crawl import crawl_site_async
+from json_report import write_json_report
 
 
 async def main():
@@ -29,11 +30,13 @@ async def main():
 
     print(f"Crawled {len(page_data)} pages")
 
-    for page, data in page_data.items():
-        print(f"Url: {page}")
-        print(f"\theading: {data["heading"]}")
-        print(f"\tlinks: {len(data["outgoing_links"])}")
-        print(f"\timages: {len(data["image_urls"])}")
+    # for page, data in page_data.items():
+    #     print(f"Url: {page}")
+    #     print(f"\theading: {data["heading"]}")
+    #     print(f"\tlinks: {len(data["outgoing_links"])}")
+    #     print(f"\timages: {len(data["image_urls"])}")
+
+    write_json_report(page_data)    
 
     sys.exit(0)
 
